@@ -26,5 +26,15 @@ namespace _291_proj
         {
 
         }
+
+        private void AddButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ModifyButton_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

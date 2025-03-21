@@ -180,7 +180,7 @@
             this.Controls.Add(this.label4);
             this.Controls.Add(this.bttnCLEAR);
             this.Controls.Add(this.bttnLOGIN);
-            this.Controls.Add(this.CheckbxShowPW);
+           // this.Controls.Add(this.CheckbxShowPW);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.txtUsername);
             this.Controls.Add(this.label2);
@@ -192,7 +192,7 @@
             this.Name = "FrmLOGIN";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "FrmLOGIN";
-            this.Load += new System.EventHandler(this.FrmLOGIN_Load);
+            //this.Load += new System.EventHandler(this.FrmLOGIN_Load); 
             this.ResumeLayout(false);
             this.PerformLayout();
 

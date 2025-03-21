@@ -166,6 +166,7 @@
             ModifyButton.TabIndex = 47;
             ModifyButton.Text = "Modify";
             ModifyButton.UseVisualStyleBackColor = false;
+            ModifyButton.Click += ModifyButton_Click;
             // 
             // AddButton
             // 
@@ -177,6 +178,7 @@
             AddButton.TabIndex = 46;
             AddButton.Text = "Add";
             AddButton.UseVisualStyleBackColor = false;
+            AddButton.Click += AddButton_Click;
             // 
             // label4
             // 
@@ -230,7 +232,7 @@
             MovieTypeBox.Size = new Size(164, 23);
             MovieTypeBox.TabIndex = 79;
             // 
-            // Form2
+            // Movie_form
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -255,7 +257,7 @@
             Controls.Add(label4);
             Controls.Add(label3);
             Controls.Add(label1);
-            Name = "Form2";
+            Name = "Movie_form";
             Text = "Form2";
             ResumeLayout(false);
             PerformLayout();
