@@ -1,8 +1,8 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Security.Cryptography;
@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace CS291_Proj
 {
-    public partial class FrmLOGIN: Form
+    public partial class FrmLOGIN : Form
     {
         private string connectionString = @"Server=GUMMY\aleis;Database=ProjDB291;Trusted_Connection=True";
         public FrmLOGIN()
@@ -25,31 +25,34 @@ namespace CS291_Proj
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text;
 
-            if (username == "" || password == "")
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Please enter valid username and password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please enter valid username and password.", "Login Failed", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            else if (ValidateUser(username, password))
+            if (ValidateUser(username, password))
             {
-                MessageBox.Show("Login Successful.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                FrmMAIN mainForm = new FrmMAIN();
-                mainForm.Show();
+                MessageBox.Show("Login Successful.", "Success", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // FrmMAIN mainForm = new FrmMAIN(); // Temporarily commented out
+                // mainForm.Show();
                 this.Hide();
             }
-
             else
             {
-                MessageBox.Show("Invalid Username or Password. Try Again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                MessageBox.Show("Invalid Username or Password. Try Again.", "Login Failed", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void bttnCLEAR_Click(object sender, EventArgs e)
         {
             txtUsername.Clear();
-            txtPassword.Clear();
+            txtPassword.Text = "";
+            // For any label that needs clearing, set Text to empty string instead of Clear()
+            // errorLabel.Text = ""; 
         }
 
         private bool ValidateUser(string username, string password)
@@ -65,15 +68,11 @@ namespace CS291_Proj
 
                 if (result != null)
                 {
-                    string storedHashPassword = result.ToString();
-                    string enteredHashPassword = HashPassword(password); //hash entered password
-
-                    return storedHashPassword == enteredHashPassword; //compare hashes
+                    string storedHashPassword = result!.ToString();
+                    string enteredHashPassword = HashPassword(password);
+                    return storedHashPassword == enteredHashPassword;
                 }
-                else
-                {
-                    return false; //username not found
-                }
+                return false;
             }
         }
 

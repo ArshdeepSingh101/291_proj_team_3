@@ -1,0 +1,35 @@
+2025W CMPT291 AS4
+Team: X02L-Team3
+
+Deduction:
+
+[-0.1] Wrong table dropping order
+[-0.1] Wrong records deletion order
+
+[-0.3] Should not hard code IDs in test data.
+       That will restrict future test data addition and is bad for the large amount of required test data.
+
+[-0.1] Insert error
+Msg 547, Level 16, State 0, Line 87
+The INSERT statement conflicted with the FOREIGN KEY constraint "FK__CustomerP__Custo__2136E270". The conflict occurred in database "LAB7", table "dbo.Customer", column 'CustomerID'.
+The statement has been terminated.
+
+[-0.1] Insert error
+Msg 547, Level 16, State 0, Line 99
+The INSERT statement conflicted with the FOREIGN KEY constraint "FK__EmployeeP__Emplo__1C722D53". The conflict occurred in database "LAB7", table "dbo.Employee", column 'EmployeeID'.
+The statement has been terminated.
+
+[-0.1] No test data in table QueueUp
+
+[-0.1] Unique key for Employee should be (SSN, StartDate)
+
+[-0.1] Employee table missing address attributes
+
+
+Suggestion:
+
+- Should avoid using SQL keywords (e.g., order) to name data.
+- Should comment out the select statements in the data insertion script.
+
+Total 2.0/3.0
+

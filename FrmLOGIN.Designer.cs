@@ -1,4 +1,4 @@
-﻿namespace CS291_Proj
+﻿﻿namespace CS291_Proj
 {
     partial class FrmLOGIN
     {
