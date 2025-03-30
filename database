@@ -1,0 +1,225 @@
+-----------------------------------------------------------------------------------
+-- 1. If database is empty create it first.
+-----------------------------------------------------------------------------------
+IF DB_ID('DB291') IS NULL
+    CREATE DATABASE DB291;
+GO
+
+--change to DB291
+USE DB291;
+GO
+
+
+-----------------------------------------------------------------------------------
+-- 2. clean old version if exist.
+-----------------------------------------------------------------------------------
+-- order matter here, do not move before check
+
+DROP SEQUENCE IF EXISTS Movie_MovieID_Seq;
+
+IF OBJECT_ID('dbo.ActorRate', 'U') IS NOT NULL
+    DROP TABLE ActorRate;
+
+IF OBJECT_ID('dbo.RentalRecord', 'U') IS NOT NULL
+    DROP TABLE RentalRecord;
+
+IF OBJECT_ID('dbo.ActorAppear', 'U') IS NOT NULL
+    DROP TABLE ActorAppear;
+
+IF OBJECT_ID('dbo.Actor', 'U') IS NOT NULL
+    DROP TABLE Actor;
+
+IF OBJECT_ID('dbo.CustomerQueue', 'U') IS NOT NULL
+    DROP TABLE CustomerQueue;
+
+IF OBJECT_ID('dbo.Movie', 'U') IS NOT NULL
+    DROP TABLE Movie;
+
+IF OBJECT_ID('dbo.AppUserPassword', 'U') IS NOT NULL
+    DROP TABLE AppUserPassword;
+
+IF OBJECT_ID('dbo.CustomerPhone', 'U') IS NOT NULL
+    DROP TABLE CustomerPhone;
+
+IF OBJECT_ID('dbo.AppUser', 'U') IS NOT NULL
+    DROP TABLE AppUser;
+
+IF OBJECT_ID('dbo.Customer', 'U') IS NOT NULL
+    DROP TABLE Customer;
+
+IF OBJECT_ID('dbo.EmployeePhone', 'U') IS NOT NULL
+    DROP TABLE EmployeePhone;
+
+IF OBJECT_ID('dbo.Employee', 'U') IS NOT NULL
+    DROP TABLE Employee;
+
+
+-----------------------------------------------------------------------------------
+-- 3. create tables
+-----------------------------------------------------------------------------------
+
+-- Employee 
+CREATE TABLE Employee (
+    EmployeeID INT IDENTITY(1,1),
+    SSN NCHAR(9) NOT NULL,
+    LastName VARCHAR(40) NOT NULL,
+    FirstName VARCHAR(40) NOT NULL,
+    Address VARCHAR(40),
+    City VARCHAR(40),
+    Province NCHAR(2),
+    PostalCode NCHAR(6),
+    StartDate DATE NOT NULL,
+    PRIMARY KEY( EmployeeID )
+);
+
+-- EmployeePhone 
+CREATE TABLE EmployeePhone (
+    EmployeeID INT NOT NULL,
+    PhoneNum NCHAR(10) NOT NULL,
+    PhoneType VARCHAR(10) NOT NULL,
+    StartTime DATETIME NOT NULL DEFAULT (GETDATE()),
+    EndTime DATETIME,
+    PRIMARY KEY ( EmployeeID, PhoneNum, StartTime ),
+    FOREIGN KEY ( EmployeeID ) REFERENCES Employee( EmployeeID ),
+    CONSTRAINT EmpPhonePeriod CHECK (StartTime < EndTime)
+);
+
+
+-- Customer 
+CREATE TABLE Customer (
+    CustomerID INT IDENTITY(1,1),
+    SSN NCHAR(9) NOT NULL,
+    LastName VARCHAR(40) NOT NULL,
+    FirstName VARCHAR(40) NOT NULL,
+    Address VARCHAR(40),
+    City VARCHAR(40),
+    Province NCHAR(2),
+    PostalCode NCHAR(6),
+    Email VARCHAR(40) NOT NULL,
+    AccountNum NCHAR(10) NOT NULL,
+    CreditCardNum NCHAR(16) NOT NULL,
+    CreditCardExp NCHAR(4) NOT NULL,
+    CreditCardCvv NCHAR(3) NOT NULL,
+    CreationDate DATE NOT NULL DEFAULT (GETDATE()),
+    PRIMARY KEY( CustomerID )
+);
+
+-- CustomerPhone 
+CREATE TABLE CustomerPhone (
+    CustomerID INT NOT NULL,
+    PhoneNum NCHAR(10) NOT NULL,
+    PhoneType VARCHAR(10) NOT NULL,
+    StartTime DATETIME NOT NULL DEFAULT (GETDATE()),
+    EndTime DATETIME,
+    PRIMARY KEY ( CustomerID, PhoneNum, StartTime ),
+    FOREIGN KEY ( CustomerID ) REFERENCES Customer( CustomerID ),
+    CONSTRAINT CustPhonePeriod CHECK (StartTime < EndTime)
+);
+
+CREATE TABLE AppUser (
+    AppUserID INT IDENTITY(1,1) PRIMARY KEY,
+    Username VARCHAR(50) NOT NULL UNIQUE,
+    PasswordHash VARCHAR(200) NOT NULL,
+
+    Role VARCHAR(20) NOT NULL
+        CHECK (Role IN ('Employee','Customer')),
+
+    EmployeeID INT NULL,
+    CustomerID INT NULL,
+
+    FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID),
+    FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)
+    
+);
+
+CREATE TABLE AppUserPassword (
+    AppUserID INT NOT NULL PRIMARY KEY,
+    PasswordHash VARCHAR(200) NOT NULL,   -- save hash
+   
+
+    FOREIGN KEY (AppUserID) REFERENCES AppUser(AppUserID)
+        ON DELETE CASCADE
+);
+
+-- Movie 
+CREATE TABLE Movie (
+    MovieID INT NOT NULL,
+    MovieName VARCHAR(40) NOT NULL,
+    MovieType VARCHAR(10) NOT NULL
+        CHECK ( MovieType IN ('Comedy', 'Drama', 'Action', 'Foreign') ),
+    Fee NUMERIC(6,2) NOT NULL,
+    NumOfCopy INT NOT NULL,
+    PRIMARY KEY( MovieID )
+);
+
+-- create a MovieID sequence
+CREATE SEQUENCE Movie_MovieID_Seq
+    START WITH 1000
+    INCREMENT BY 1;
+
+-- CustomerQueue
+CREATE TABLE CustomerQueue (
+    CustomerID INT NOT NULL,
+    MovieID INT NOT NULL,
+    SortNum INT NOT NULL,
+    PRIMARY KEY ( CustomerID, MovieID ),
+    UNIQUE ( CustomerID, SortNum ),
+    FOREIGN KEY ( CustomerID ) REFERENCES Customer( CustomerID ),
+    FOREIGN KEY ( MovieID ) REFERENCES Movie( MovieID )
+);
+
+-- Actor 
+CREATE TABLE Actor (
+    ActorID INT IDENTITY(1,1),
+    Name VARCHAR(100) NOT NULL,
+    Gender NCHAR(1) NOT NULL CHECK ( Gender IN ('M', 'F') ),
+    DateOfBrith DATE NOT NULL,
+    PRIMARY KEY ( ActorID )
+);
+
+-- ActorAppear 
+CREATE TABLE ActorAppear (
+    MovieID INT NOT NULL,
+    ActorID INT NOT NULL,
+    PRIMARY KEY ( MovieID, ActorID ),
+    FOREIGN KEY ( MovieID ) REFERENCES Movie( MovieID ),
+    FOREIGN KEY ( ActorID ) REFERENCES Actor( ActorID )
+);
+
+-- RentalRecord 
+CREATE TABLE RentalRecord (
+    RentalRecordID INT IDENTITY(1,1),
+    EmployeeID INT NOT NULL,
+    CustomerID INT NOT NULL,
+    MovieID INT NOT NULL,
+    CheckoutTime DATETIME NOT NULL DEFAULT (GETDATE()),
+    ReturnTime DATETIME,
+    MovieRate INT,
+    PRIMARY KEY( RentalRecordID ),
+    FOREIGN KEY ( EmployeeID ) REFERENCES Employee( EmployeeID ),
+    FOREIGN KEY ( CustomerID ) REFERENCES Customer( CustomerID ),
+    FOREIGN KEY ( MovieID ) REFERENCES Movie( MovieID )
+);
+
+-- ActorRate 
+CREATE TABLE ActorRate (
+    RentalRecordID INT NOT NULL,
+    ActorID INT NOT NULL,
+    ActorRate INT,
+    FOREIGN KEY ( RentalRecordID ) REFERENCES RentalRecord( RentalRecordID ),
+    FOREIGN KEY ( ActorID ) REFERENCES Actor( ActorID )
+);
+
+PRINT 'Database DB291 Schema has been created successfully!';
+GO
+
+INSERT INTO AppUser
+    (Username, PasswordHash, Role)
+VALUES
+    ('testuser', 'bKE9UspwyIPg8LsQHkJaiehiTeUdstI5JZOvaoQRgJA=', 'Employee');
+
+
+INSERT INTO AppUser
+    (Username, PasswordHash, Role)
+VALUES
+    ('testuser2', 'V85Sz9IMSEyLQVabjEMnT4bEX3fQXoPDAIVNve98nXo=', 'Customer');
