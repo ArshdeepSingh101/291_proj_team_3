@@ -44,7 +44,7 @@ namespace CS291_Proj
         }
         private void bttnSearch_Click(object sender, EventArgs e)
         {
-            FrmReport reportForm = new FrmReport();
+            Form2 reportForm = new Form2();
             reportForm.Show();
             this.Hide();
         }
