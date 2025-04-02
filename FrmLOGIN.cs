@@ -14,7 +14,7 @@ namespace CS291_Proj
 {
     public partial class FrmLOGIN: Form
     {
-        private string connectionString = @"Server=GUMMY\aleis;Database=ProjDB291;Trusted_Connection=True";
+        private string connectionString = "Server=GUMMY\\SQLEXPRESS;Database=ProjDB291;Trusted_Connection=True";
         public FrmLOGIN()
         {
             InitializeComponent();
@@ -34,9 +34,9 @@ namespace CS291_Proj
             else if (ValidateUser(username, password))
             {
                 MessageBox.Show("Login Successful.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                FrmMAIN mainForm = new FrmMAIN();
+                FrmRENTAL mainForm = new FrmRENTAL();
                 mainForm.Show();
-                this.Hide();
+                this.Close();
             }
 
             else
@@ -95,7 +95,7 @@ namespace CS291_Proj
         {
             FrmSIGNUP_EMP registrationForm = new FrmSIGNUP_EMP();
             registrationForm.Show();
-            this.Hide();
+            this.Close();
         }
     }
 }
