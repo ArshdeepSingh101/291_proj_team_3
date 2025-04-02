@@ -26,19 +26,19 @@ namespace CS291_Proj
 
         private void bttnRENT_Click(object sender, EventArgs e)
         {
-            FrmCustomers customersForm = new FrmCustomers();
-            customersForm.Show();
-            this.Hide();
+            //Customer_form customersForm = new Customer_form();
+            //customersForm.Show();
+            //this.Hide();
         }
         private void bttnCustomers_Click(object sender, EventArgs e)
         {
-            FrmCustomers customersForm = new FrmCustomers();
+            FrmCustomer customersForm = new FrmCustomer();
             customersForm.Show();
             this.Hide();
         }
         private void bttnMovies_Click(object sender, EventArgs e)
         {
-            FrmMovies moviesForm = new FrmMovies();
+            Movie_form moviesForm = new Movie_form();
             moviesForm.Show();
             this.Hide();
         }
