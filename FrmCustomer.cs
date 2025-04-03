@@ -13,7 +13,8 @@ namespace _291_proj
 {
     public partial class FrmCustomer : Form
     {
-        private string connectionString = "Server=LAPTOP-ON9FGOEA\\SQLEXPRESS;Database=Proj2025W;Trusted_Connection=True";
+        private string connectionString = "Server=LAPTOP-ON9FGOEA\\SQLEXPRESS;Database=DB291;Trusted_Connection=True";
+        // this is the connection string to connect to the database
 
         public FrmCustomer()
         {
@@ -22,7 +23,15 @@ namespace _291_proj
 
         private void button1_Click(object sender, EventArgs e)
         {
-
+            string search = txtSearch.Text;
+            if (!string.IsNullOrEmpty(search))
+            {
+                search_customer(search);
+            }
+            else
+            {
+                LoadCustomers();
+            }
         }
 
         private void label2_Click(object sender, EventArgs e)
@@ -41,6 +50,7 @@ namespace _291_proj
         }
 
         private void LoadCustomers()
+        // This is to load the customers from the database into the data grid view on the form.
         {
             using (SqlConnection con = new SqlConnection(connectionString))
             {
@@ -53,6 +63,7 @@ namespace _291_proj
             }
         }
 
+        // this is to clear the text boxes after adding or modifying a customer
         private void clearTextBox()
         {
             txtSSN.Text = "";
@@ -70,6 +81,7 @@ namespace _291_proj
 
         }
 
+        // this is to add a customer to the database
         private void AddCustomer(string ssn, string firstName, string lastName, string address, string city, string province, string postalCode, string email, string accountNum, string creditCardNumber, string expiryNumber, string CVV)
         {
             using (SqlConnection con = new SqlConnection(connectionString))
@@ -105,6 +117,7 @@ namespace _291_proj
 
         }
 
+        // this is to modify a customer in the database
         private void ModifyCustomer(string customerID)
         {
             using (SqlConnection con = new SqlConnection(connectionString))
@@ -169,6 +182,8 @@ namespace _291_proj
             }
         }
 
+        // this is to delete a customer from the database
+
         private void DeleteCustomer(string customerID)
         {
             using (SqlConnection con = new SqlConnection(connectionString))
@@ -191,6 +206,21 @@ namespace _291_proj
                 }
             }
         }
+
+        private void search_customer(string search)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT * FROM Customer WHERE FirstName LIKE @search OR LastName LIKE @search";
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@search", "%" + search + "%");
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dgvCustomers.DataSource = dt;
+            }
+        }
+        // This is the code for when the add button is clicked.
         private void btnAdd_Click(object sender, EventArgs e)
         {
             AddCustomer(txtSSN.Text, txtFirstName.Text, txtLastName.Text, txtAddress.Text, txtCity.Text, txtProvince.Text, txtPostalCode.Text, txtEmail.Text, txtAccountNum.Text, txtCreditCardNumber.Text, txtExpiryDate.Text, txtCVV.Text);
@@ -208,6 +238,7 @@ namespace _291_proj
 
         }
 
+        // this is the code for when the modify button is clicked
         private void btnModify_Click(object sender, EventArgs e)
         {
             if (dgvCustomers.SelectedRows.Count > 0)
@@ -221,6 +252,7 @@ namespace _291_proj
             }
         }
 
+        // this is the code for when the delete button is clicked
         private void btnDelete_Click(object sender, EventArgs e)
         {
             if (dgvCustomers.SelectedRows.Count > 0)
@@ -243,5 +275,16 @@ namespace _291_proj
         {
 
         }
+
+        private void label14_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }
+
