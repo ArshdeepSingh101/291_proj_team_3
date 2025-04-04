@@ -1,4 +1,4 @@
-﻿namespace _291_proj
+﻿﻿﻿namespace CS291_Proj // Changed namespace
 {
     partial class Movie_form
     {
@@ -155,6 +155,7 @@
             DeleteButton.TabIndex = 48;
             DeleteButton.Text = "Delete";
             DeleteButton.UseVisualStyleBackColor = false;
+            DeleteButton.Click += new System.EventHandler(this.DeleteButton_Click);
             // 
             // ModifyButton
             // 
