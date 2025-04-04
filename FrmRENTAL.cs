@@ -13,11 +13,12 @@ namespace CS291_Proj
 {
     public partial class FrmRENTAL : Form
     {
-        private string connectionString = "Server=GUMMY\\SQLEXPRESS;Database=ProjDB291;Trusted_Connection=True";
+        private string connectionString = "Server=GUMMY;Database=DB291;Trusted_Connection=True;";
         public FrmRENTAL()
         {
             InitializeComponent();
             txtCustomerID.KeyDown += TxtCustomerID_KeyDown;
+            LoadMoviesDropdown();
 
             ddMovies.SelectedIndexChanged += ddMovies_SelectedIndexChanged;
             txtCustomerID.TextChanged += ValidateRentButton;
@@ -173,15 +174,15 @@ namespace CS291_Proj
                         // Add to RentalRecord
                         string addToRental = @"
                             INSERT INTO RentalRecord 
-                            (CustomerID, MovieID, RentalDate, DueDate) 
-                            VALUES (@CustomerID, @MovieID, @RentalDate, @DueDate)";
+                            (EmployeeID, CustomerID, MovieID, CheckoutTime) 
+                            VALUES (@EmployeeID, @CustomerID, @MovieID, @CheckoutTime)";
 
                         using (SqlCommand cmdAdd = new SqlCommand(addToRental, con, transaction))
                         {
+                            cmdAdd.Parameters.AddWithValue("@EmployeeID", /*loggedInEmployeeId*/);
                             cmdAdd.Parameters.AddWithValue("@CustomerID", customerId);
                             cmdAdd.Parameters.AddWithValue("@MovieID", movieId);
-                            cmdAdd.Parameters.AddWithValue("@RentalDate", DateTime.Now);
-                            cmdAdd.Parameters.AddWithValue("@DueDate", DateTime.Now.AddDays(7)); // 7-day rental period
+                            cmdAdd.Parameters.AddWithValue("@CheckoutTime", DateTime.Now);
                             cmdAdd.ExecuteNonQuery();
                         }
 
@@ -216,7 +217,7 @@ namespace CS291_Proj
                 }
             }
         }
-        private void bttnCustomers_Click(object sender, EventArgs e)
+        /*private void bttnCustomers_Click(object sender, EventArgs e)
         {
             FrmCustomers customersForm = new FrmCustomers();
             customersForm.Show();
@@ -233,7 +234,7 @@ namespace CS291_Proj
             Form2 reportForm = new Form2();
             reportForm.Show();
             this.Hide();
-        }
+        }*/
         private void bttnLOGIN_Click(object sender, EventArgs e)
         {
             using (FrmLOGIN loginForm = new FrmLOGIN())
@@ -293,21 +294,23 @@ namespace CS291_Proj
         {
             try
             {
-                // Get all movies from database
+                ddMovies.SelectedIndexChanged -= ddMovies_SelectedIndexChanged;
+
                 DataTable movies = GetAllMovies();
 
-                // Configure the ComboBox
                 ddMovies.DataSource = movies;
                 ddMovies.DisplayMember = "MovieName";
                 ddMovies.ValueMember = "MovieID";
-
-                // Optional settings
                 ddMovies.DropDownStyle = ComboBoxStyle.DropDownList;
-                ddMovies.SelectedIndex = -1; //start with no selection
+                ddMovies.SelectedIndex = -1;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading movies: {ex.Message}");
+            }
+            finally
+            {
+                ddMovies.SelectedIndexChanged += ddMovies_SelectedIndexChanged;
             }
         }
 
@@ -353,16 +356,23 @@ namespace CS291_Proj
         }
         private void ddMovies_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (ddMovies.SelectedValue != null)
+            try
             {
-                _selectedMovieId = (int)ddMovies.SelectedValue;
-                UpdateAvailableCopiesDisplay(_selectedMovieId);
-                ValidateRentButton(null, EventArgs.Empty);
-                ValidateQueueButton();
+                if (ddMovies.SelectedValue != null && int.TryParse(ddMovies.SelectedValue.ToString(), out int movieId))
+                {
+                    _selectedMovieId = movieId;
+                    UpdateAvailableCopiesDisplay(_selectedMovieId);
+                    ValidateRentButton(null, EventArgs.Empty);
+                    ValidateQueueButton();
+                }
+                else
+                {
+                    numCopies.Text = ""; //clear for no selection
+                }
             }
-            else
+            catch (Exception ex)
             {
-                numCopies.Text = ""; //clear for no selection
+                MessageBox.Show($"Error selecting movie: {ex.Message}");
             }
         }
 
@@ -399,24 +409,42 @@ namespace CS291_Proj
                 MessageBox.Show($"Error adding to queue: {ex.Message}");
             }
         }
+        private int GetNextSortNumForCustomer(int customerId)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT ISNULL(MAX(SortNum), 0) + 1 FROM CustomerQueue WHERE CustomerID = @CustomerID";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CustomerID", customerId);
+                    con.Open();
+                    return (int)cmd.ExecuteScalar();
+                }
+            }
+        }
         private void AddToCustomerQueue(int customerId, int movieId)
         {
             using (SqlConnection con = new SqlConnection(connectionString))
             {
                 string query = @"
-            INSERT INTO CustomerQueue (CustomerID, MovieID) 
-            VALUES (@CustomerID, @MovieID)";
+            INSERT INTO CustomerQueue (CustomerID, MovieID, SortNum) 
+            VALUES (@CustomerID, @MovieID, @SortNum)";
 
                 using (SqlCommand command = new SqlCommand(query, con))
                 {
+                    int sortNum = GetNextSortNumForCustomer(customerId);
+
                     command.Parameters.AddWithValue("@CustomerID", customerId);
                     command.Parameters.AddWithValue("@MovieID", movieId);
+                    command.Parameters.AddWithValue("@SortNum", sortNum);
 
                     con.Open();
                     command.ExecuteNonQuery();
                 }
             }
         }
+
         private void ValidateQueueButton()
         {
             bool customerValid = int.TryParse(txtCustomerID.Text, out _currentCustomerId);
