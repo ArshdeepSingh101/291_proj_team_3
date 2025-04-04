@@ -22,6 +22,7 @@ namespace CS291_Proj
             ddMovies.SelectedIndexChanged += ddMovies_SelectedIndexChanged;
             txtCustomerID.TextChanged += ValidateRentButton;
             bttnRENT.Click += bttnRENT_Click;
+            bttnQUEUE.Click += bttnQUEUE_Click;
 
             bttnRENT.Visible = false;
         }
@@ -317,7 +318,7 @@ namespace CS291_Proj
         {
             bool customerValid = int.TryParse(txtCustomerID.Text, out _currentCustomerId);
             bool movieSelected = ddMovies.SelectedIndex >= 0;
-            bool copiesAvailable = true; // You could add additional checks here
+            bool copiesAvailable = true;
 
             if (movieSelected && int.TryParse(numCopies.Text, out int copies))
             {
@@ -357,6 +358,7 @@ namespace CS291_Proj
                 _selectedMovieId = (int)ddMovies.SelectedValue;
                 UpdateAvailableCopiesDisplay(_selectedMovieId);
                 ValidateRentButton(null, EventArgs.Empty);
+                ValidateQueueButton();
             }
             else
             {
@@ -366,7 +368,66 @@ namespace CS291_Proj
 
         private void bttnQUEUE_Click(object sender, EventArgs e)
         {
+            try
+            {
+                // Validate customer ID
+                if (!int.TryParse(txtCustomerID.Text, out int customerId))
+                {
+                    MessageBox.Show("Please enter a valid Customer ID");
+                    return;
+                }
 
+                // Validate movie selection
+                if (ddMovies.SelectedValue == null)
+                {
+                    MessageBox.Show("Please select a movie to add to queue");
+                    return;
+                }
+
+                int movieId = (int)ddMovies.SelectedValue;
+
+                // Add to queue
+                AddToCustomerQueue(customerId, movieId);
+
+                MessageBox.Show("Movie added to queue successfully!");
+
+                // Refresh the queue display
+                LoadCustomerQueueMovies(customerId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding to queue: {ex.Message}");
+            }
+        }
+        private void AddToCustomerQueue(int customerId, int movieId)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = @"
+            INSERT INTO CustomerQueue (CustomerID, MovieID) 
+            VALUES (@CustomerID, @MovieID)";
+
+                using (SqlCommand command = new SqlCommand(query, con))
+                {
+                    command.Parameters.AddWithValue("@CustomerID", customerId);
+                    command.Parameters.AddWithValue("@MovieID", movieId);
+
+                    con.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        private void ValidateQueueButton()
+        {
+            bool customerValid = int.TryParse(txtCustomerID.Text, out _currentCustomerId);
+            bool movieSelected = ddMovies.SelectedIndex >= 0;
+
+            bttnQUEUE.Enabled = customerValid && movieSelected;
+        }
+
+        private void txtCustomerID_TextChanged_1(object sender, EventArgs e)
+        {
+            ValidateQueueButton();
         }
     }
 }
