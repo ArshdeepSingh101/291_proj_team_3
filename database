@@ -213,10 +213,6 @@ CREATE TABLE ActorRate (
 PRINT 'Database DB291 Schema has been created successfully!';
 GO
 
-INSERT INTO AppUser
-    (Username, PasswordHash, Role)
-VALUES
-    ('testuser', 'bKE9UspwyIPg8LsQHkJaiehiTeUdstI5JZOvaoQRgJA=', 'Employee');
 
 
 INSERT INTO AppUser
@@ -235,6 +231,10 @@ VALUES
 ('555555555','Garcia','Linda','505 Pear Dr','Toronto','ON','M5V1K4','2023-05-05'),
 ('666666666','Lee','Kevin','606 Peach Ln','Winnipeg','MB','R2M1Y4','2023-06-30');
 
+INSERT INTO AppUser
+    (Username, PasswordHash, Role, EmployeeID)
+VALUES
+    ('testuser', 'bKE9UspwyIPg8LsQHkJaiehiTeUdstI5JZOvaoQRgJA=', 'Employee', 1);
 
 INSERT INTO Customer
 (SSN, LastName, FirstName, Address, City, Province, PostalCode,
