@@ -49,6 +49,7 @@
             this.bttnCustomers = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
             this.numCopies = new System.Windows.Forms.Label();
+            this.bttnQUEUE = new System.Windows.Forms.Button();
             lblAvailability = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCustomerQ)).BeginInit();
             this.SuspendLayout();
@@ -226,7 +227,7 @@
             this.txtCustomerID.Name = "txtCustomerID";
             this.txtCustomerID.Size = new System.Drawing.Size(333, 44);
             this.txtCustomerID.TabIndex = 30;
-            this.txtCustomerID.TextChanged += new System.EventHandler(this.txtCustomerID_TextChanged);
+            //this.txtCustomerID.TextChanged += new System.EventHandler(this.txtCustomerID_TextChanged);
             // 
             // label7
             // 
@@ -246,7 +247,6 @@
             this.dgvCustomerQ.RowTemplate.Height = 33;
             this.dgvCustomerQ.Size = new System.Drawing.Size(333, 452);
             this.dgvCustomerQ.TabIndex = 32;
-            this.dgvCustomerQ.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvCustomerQ_CellContentClick);
             // 
             // label1
             // 
@@ -263,9 +263,9 @@
             this.label8.AutoSize = true;
             this.label8.Location = new System.Drawing.Point(586, 232);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(234, 25);
+            this.label8.Size = new System.Drawing.Size(154, 25);
             this.label8.TabIndex = 35;
-            this.label8.Text = "Choose a movie to rent";
+            this.label8.Text = "Select a Movie";
             // 
             // ddMovies
             // 
@@ -305,12 +305,28 @@
             this.numCopies.AutoSize = true;
             this.numCopies.BackColor = System.Drawing.Color.White;
             this.numCopies.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.numCopies.Location = new System.Drawing.Point(742, 639);
+            this.numCopies.Location = new System.Drawing.Point(742, 638);
             this.numCopies.MaximumSize = new System.Drawing.Size(60, 60);
             this.numCopies.MinimumSize = new System.Drawing.Size(60, 60);
             this.numCopies.Name = "numCopies";
             this.numCopies.Size = new System.Drawing.Size(60, 60);
             this.numCopies.TabIndex = 39;
+            // 
+            // bttnQUEUE
+            // 
+            this.bttnQUEUE.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(58)))), ((int)(((byte)(74)))), ((int)(((byte)(84)))));
+            this.bttnQUEUE.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.bttnQUEUE.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.bttnQUEUE.Font = new System.Drawing.Font("MS UI Gothic", 16.125F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bttnQUEUE.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(102)))), ((int)(((byte)(154)))), ((int)(((byte)(176)))));
+            this.bttnQUEUE.Location = new System.Drawing.Point(1111, 537);
+            this.bttnQUEUE.Margin = new System.Windows.Forms.Padding(4);
+            this.bttnQUEUE.Name = "bttnQUEUE";
+            this.bttnQUEUE.Size = new System.Drawing.Size(388, 97);
+            this.bttnQUEUE.TabIndex = 40;
+            this.bttnQUEUE.Text = "QUEUE";
+            this.bttnQUEUE.UseVisualStyleBackColor = false;
+            this.bttnQUEUE.Click += new System.EventHandler(this.bttnQUEUE_Click);
             // 
             // FrmRENTAL
             // 
@@ -318,6 +334,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(93)))), ((int)(((byte)(106)))), ((int)(((byte)(112)))));
             this.ClientSize = new System.Drawing.Size(1600, 865);
+            this.Controls.Add(this.bttnQUEUE);
             this.Controls.Add(this.numCopies);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.bttnCustomers);
@@ -371,5 +388,6 @@
         private System.Windows.Forms.Button bttnCustomers;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label numCopies;
+        private System.Windows.Forms.Button bttnQUEUE;
     }
 }
