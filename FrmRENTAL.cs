@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -12,9 +13,107 @@ namespace CS291_Proj
 {
     public partial class FrmRENTAL : Form
     {
+        private string connectionString = "Server=GUMMY\\SQLEXPRESS;Database=ProjDB291;Trusted_Connection=True";
         public FrmRENTAL()
         {
             InitializeComponent();
+            txtCustomerID.KeyDown += TxtCustomerID_KeyDown;
+
+            ddMovies.SelectedIndexChanged += ddMovies_SelectedIndexChanged;
+            txtCustomerID.TextChanged += ValidateRentButton;
+            bttnRENT.Click += bttnRENT_Click;
+
+            bttnRENT.Visible = false;
+        }
+
+        //store movie selection and customer
+        private int _selectedMovieId = -1;
+        private int _currentCustomerId = -1;
+
+        private void TxtCustomerID_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // Prevent the "ding" sound when pressing Enter
+                e.SuppressKeyPress = true;
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(txtCustomerID.Text))
+                {
+                    MessageBox.Show("Please enter a Customer ID");
+                    return;
+                }
+
+                if (!int.TryParse(txtCustomerID.Text, out int customerId))
+                {
+                    MessageBox.Show("Please enter a valid Customer ID");
+                    return;
+                }
+
+                // Load and display the movies
+                LoadCustomerQueueMovies(customerId);
+            }
+        }
+
+        private void LoadCustomerQueueMovies(int customerId)
+        {
+            try
+            {
+                // Clear previous results
+                dgvCustomerQ.DataSource = null;
+
+                // Get new results
+                dgvCustomerQ.DataSource = GetCustomerQueueMovies(customerId);
+
+                //DataGridView Formatting
+                dgvCustomerQ.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                dgvCustomerQ.Columns["MovieID"].HeaderText = "Movie ID";
+                dgvCustomerQ.Columns["MovieName"].HeaderText = "Movie Title";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading movies: {ex.Message}");
+            }
+        }
+
+        private DataTable GetCustomerQueueMovies(int customerId)
+        {
+            DataTable dt = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = @"
+            SELECT m.MovieID, m.MovieName 
+            FROM CustomerQueue cq
+            JOIN Movie m ON cq.MovieID = m.MovieID
+            WHERE cq.CustomerID = @CustomerID";
+
+                using (SqlCommand command = new SqlCommand(query, con))
+                {
+                    command.Parameters.AddWithValue("@CustomerID", customerId);
+
+                    con.Open();
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        private void LoadCustomers()
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT * FROM Customer";
+                SqlDataAdapter da = new SqlDataAdapter(query, con);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dgvCustomerQ.DataSource = dt;
+
+            }
         }
 
         private void FrmRental_Load(object sender, EventArgs e)
@@ -26,19 +125,105 @@ namespace CS291_Proj
 
         private void bttnRENT_Click(object sender, EventArgs e)
         {
-            //Customer_form customersForm = new Customer_form();
-            //customersForm.Show();
-            //this.Hide();
+            try
+            {
+                // Get the selected movie and customer
+                int movieId = (int)ddMovies.SelectedValue;
+                int customerId = int.Parse(txtCustomerID.Text);
+
+                // Process the rental transaction
+                ProcessMovieRental(customerId, movieId);
+
+                MessageBox.Show("Movie rented successfully!");
+
+                // Refresh the queue display
+                LoadCustomerQueueMovies(customerId);
+
+                // Reset selection
+                ddMovies.SelectedIndex = -1;
+                bttnRENT.Visible = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error renting movie: {ex.Message}");
+            }
+        }
+        private void ProcessMovieRental(int customerId, int movieId)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                con.Open();
+                using (SqlTransaction transaction = con.BeginTransaction())
+                {
+                    try
+                    {
+                        // Remove from CustomerQueue
+                        string removeFromQueue = @"
+                            DELETE FROM CustomerQueue 
+                            WHERE CustomerID = @CustomerID AND MovieID = @MovieID";
+
+                        using (SqlCommand cmdRemove = new SqlCommand(removeFromQueue, con, transaction))
+                        {
+                            cmdRemove.Parameters.AddWithValue("@CustomerID", customerId);
+                            cmdRemove.Parameters.AddWithValue("@MovieID", movieId);
+                            cmdRemove.ExecuteNonQuery();
+                        }
+
+                        // Add to RentalRecord
+                        string addToRental = @"
+                            INSERT INTO RentalRecord 
+                            (CustomerID, MovieID, RentalDate, DueDate) 
+                            VALUES (@CustomerID, @MovieID, @RentalDate, @DueDate)";
+
+                        using (SqlCommand cmdAdd = new SqlCommand(addToRental, con, transaction))
+                        {
+                            cmdAdd.Parameters.AddWithValue("@CustomerID", customerId);
+                            cmdAdd.Parameters.AddWithValue("@MovieID", movieId);
+                            cmdAdd.Parameters.AddWithValue("@RentalDate", DateTime.Now);
+                            cmdAdd.Parameters.AddWithValue("@DueDate", DateTime.Now.AddDays(7)); // 7-day rental period
+                            cmdAdd.ExecuteNonQuery();
+                        }
+
+                        // Decrease available copies in Movie table
+                        string updateCopies = @"
+                            UPDATE Movie 
+                            SET NumofCopy = NumofCopy - 1 
+                            WHERE MovieID = @MovieID AND NumofCopy > 0";
+
+                        using (SqlCommand cmdUpdate = new SqlCommand(updateCopies, con, transaction))
+                        {
+                            cmdUpdate.Parameters.AddWithValue("@MovieID", movieId);
+                            int rowsAffected = cmdUpdate.ExecuteNonQuery();
+
+                            if (rowsAffected == 0)
+                            {
+                                throw new Exception("No copies available to rent");
+                            }
+                        }
+
+                        // Commit transaction if all operations succeeded
+                        transaction.Commit();
+                        UpdateAvailableCopiesDisplay(movieId); //update display after rental
+                        LoadMoviesDropdown(); //refresh movie dropdown
+                    }
+                    catch
+                    {
+                        // Roll back if any operation fails
+                        transaction.Rollback();
+                        throw; // Re-throw the exception
+                    }
+                }
+            }
         }
         private void bttnCustomers_Click(object sender, EventArgs e)
         {
-            FrmCustomer customersForm = new FrmCustomer();
+            FrmCustomers customersForm = new FrmCustomers();
             customersForm.Show();
             this.Hide();
         }
         private void bttnMovies_Click(object sender, EventArgs e)
         {
-            Movie_form moviesForm = new Movie_form();
+            Movies_form moviesForm = new Movies_form();
             moviesForm.Show();
             this.Hide();
         }
@@ -69,22 +254,119 @@ namespace CS291_Proj
 
             MessageBox.Show("Logged out successfully");
         }
-
-
-        private void dgvCustomerQ_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void DataGrid_Load(object sender, EventArgs e)
         {
+            // Set focus to the Customer ID textbox when form loads
+            txtCustomerID.Focus();
 
+            // Optional: Set up DataGridView properties
+            dgvCustomerQ.AutoGenerateColumns = true;
+            dgvCustomerQ.ReadOnly = true;
+            dgvCustomerQ.AllowUserToAddRows = false;
         }
 
-        private void txtCustomerID_TextChanged(object sender, EventArgs e)
-        {
+        //DROPDOWN
 
+        //get movie data
+        private DataTable GetAllMovies()
+        {
+            DataTable dt = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT MovieID, MovieName FROM Movie";
+
+                using (SqlCommand command = new SqlCommand(query, con))
+                {
+                    con.Open();
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+
+            return dt;
+        }
+        private void LoadMoviesDropdown()
+        {
+            try
+            {
+                // Get all movies from database
+                DataTable movies = GetAllMovies();
+
+                // Configure the ComboBox
+                ddMovies.DataSource = movies;
+                ddMovies.DisplayMember = "MovieName";
+                ddMovies.ValueMember = "MovieID";
+
+                // Optional settings
+                ddMovies.DropDownStyle = ComboBoxStyle.DropDownList;
+                ddMovies.SelectedIndex = -1; //start with no selection
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading movies: {ex.Message}");
+            }
         }
 
+        //RENTBTTN
+
+        //show rent button if movie and customer have been chosen
+        private void ValidateRentButton(object sender, EventArgs e)
+        {
+            bool customerValid = int.TryParse(txtCustomerID.Text, out _currentCustomerId);
+            bool movieSelected = ddMovies.SelectedIndex >= 0;
+            bool copiesAvailable = true; // You could add additional checks here
+
+            if (movieSelected && int.TryParse(numCopies.Text, out int copies))
+            {
+                copiesAvailable = copies > 0;
+            }
+
+            bttnRENT.Visible = customerValid && movieSelected && copiesAvailable;
+        }
+
+        private void UpdateAvailableCopiesDisplay(int movieId)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    string query = "SELECT NumofCopy FROM Movie WHERE MovieID = @MovieID";
+
+                    using (SqlCommand command = new SqlCommand(query, con))
+                    {
+                        command.Parameters.AddWithValue("@MovieID", movieId);
+                        con.Open();
+
+                        object result = command.ExecuteScalar();
+                        numCopies.Text = result?.ToString() ?? "0"; // Just the number or "0" if null
+                    }
+                }
+            }
+            catch
+            {
+                numCopies.Text = "0"; // Show 0 on error
+            }
+        }
         private void ddMovies_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            if (ddMovies.SelectedValue != null)
+            {
+                _selectedMovieId = (int)ddMovies.SelectedValue;
+                UpdateAvailableCopiesDisplay(_selectedMovieId);
+                ValidateRentButton(null, EventArgs.Empty);
+            }
+            else
+            {
+                numCopies.Text = ""; //clear for no selection
+            }
         }
 
+        private void bttnQUEUE_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
