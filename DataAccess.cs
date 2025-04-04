@@ -6,7 +6,7 @@ namespace _291_proj
 {
     public class DataAccess
     {
-        private static readonly string connectionString = @"Server=100.102.207.92;Database=MovieRentalDB;User ID=sa;Password=Levitron14;TrustServerCertificate=True;Encrypt=False;";
+        private static readonly string connectionString = @"Server=100.102.207.92;Database=DB291;User ID=sa;Password=Levitron14;TrustServerCertificate=True;Encrypt=False;";
         
         /// <summary>
         /// Returns a display-safe version of the connection string (password masked)
