@@ -129,14 +129,20 @@ namespace CS291_Proj
         {
             try
             {
-                // Get the selected movie and customer
+                if (ddMovies.SelectedValue == null)
+                {
+                    MessageBox.Show("Please select a movie before renting.", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return; // Stop execution to prevent a crash
+                }
+                
+                //safely get the selected movie and customer
                 int movieId = (int)ddMovies.SelectedValue;
                 int customerId = int.Parse(txtCustomerID.Text);
 
                 // Process the rental transaction
                 ProcessMovieRental(customerId, movieId);
 
-                MessageBox.Show("Movie rented successfully!");
+                MessageBox.Show("Movie rented successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // Refresh the queue display
                 LoadCustomerQueueMovies(customerId);
@@ -147,7 +153,7 @@ namespace CS291_Proj
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error renting movie: {ex.Message}");
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void ProcessMovieRental(int customerId, int movieId)
@@ -174,12 +180,12 @@ namespace CS291_Proj
                         // Add to RentalRecord
                         string addToRental = @"
                             INSERT INTO RentalRecord 
-                            (EmployeeID, CustomerID, MovieID, CheckoutTime) 
-                            VALUES (@EmployeeID, @CustomerID, @MovieID, @CheckoutTime)";
+                            (CustomerID, MovieID, CheckoutTime) 
+                            VALUES (@CustomerID, @MovieID, @CheckoutTime)";
 
                         using (SqlCommand cmdAdd = new SqlCommand(addToRental, con, transaction))
                         {
-                            cmdAdd.Parameters.AddWithValue("@EmployeeID", /*loggedInEmployeeId*/);
+                            //cmdAdd.Parameters.AddWithValue("@EmployeeID", /*loggedInEmployeeId*/);
                             cmdAdd.Parameters.AddWithValue("@CustomerID", customerId);
                             cmdAdd.Parameters.AddWithValue("@MovieID", movieId);
                             cmdAdd.Parameters.AddWithValue("@CheckoutTime", DateTime.Now);
